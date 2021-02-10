@@ -8,6 +8,8 @@ import EndGame from 'components/EndGame'
 import TextColumns from 'components/TextColumns'
 import bidItems from 'store/bid-items.json'
 
+import StyledWrapper from './style'
+
 const App = () => {
   const currentItemIndex = useRef(0)
   const [currentItem, setCurrentItem] = useState(null)
@@ -27,7 +29,7 @@ const App = () => {
     setCurrentItem(bidItems[currentItemIndex.current])
     setPreviousBids([])
     setIsProcessing(false)
-  }, [currentItemIndex])
+  }, [currentItemIndex, setPlayer1Bid, setPlayer2Bid, setCurrentItem])
 
   const handleWinningBid = useCallback(
     (bid) => {
@@ -38,15 +40,22 @@ const App = () => {
         ]
 
         const itemPrice = currentItem.price
-        const winner = playersArray
-          .filter((player) => player.bid <= itemPrice)
-          .reduce((prev, current) => (prev.bid > current.bid ? prev : current))
+        const confirmBids = playersArray.filter(
+          (player) => player.bid <= itemPrice
+        )
+
+        const winner =
+          confirmBids.length > 0
+            ? confirmBids.reduce((prev, current) =>
+                prev.bid > current.bid ? prev : current
+              )
+            : 'Both players overbid! No winners.'
 
         setRoundWinner(winner)
 
         const timeout = setTimeout(() => {
           handleResetAndContinue()
-        }, 3000)
+        }, 4000)
 
         return () => clearTimeout(timeout)
       }
@@ -68,11 +77,7 @@ const App = () => {
       setIsProcessing(true)
       setPlayer2Bid(bid)
 
-      const timeout = setTimeout(() => {
-        handleWinningBid(bid)
-      }, 3000)
-
-      return () => clearTimeout(timeout)
+      handleWinningBid(bid)
     }
   }
 
@@ -91,16 +96,33 @@ const App = () => {
         </Heading>
       </AppBar>
       <Box pad="large">
-        <Box style={{ margin: '0 auto' }}>
+        <StyledWrapper>
           {roundWinner ? (
-            <Heading level={3} textAlign="center" color="brand">
-              Player {roundWinner.player} Wins with{' '}
-              {currentItem.currency.symbol}
-              {roundWinner.bid} bid!
-            </Heading>
+            <>
+              <Text color="black" textAlign="center" weight="bold">
+                Item Cost: {currentItem.currency.symbol}
+                {currentItem.price}
+              </Text>
+              <Heading
+                level={3}
+                textAlign="center"
+                color="brand"
+                margin={{ top: '5px' }}
+              >
+                {roundWinner instanceof Object ? (
+                  <>
+                    Player {roundWinner.player} Wins with{' '}
+                    {currentItem.currency.symbol}
+                    {roundWinner.bid} bid!
+                  </>
+                ) : (
+                  <>{roundWinner}</>
+                )}
+              </Heading>
+            </>
           ) : (
             <Heading level={3} textAlign="center" color="brand">
-              {currentItemIndex.current > 5 ? (
+              {currentItemIndex.current > 4 ? (
                 <span>Game Over!</span>
               ) : (
                 <span>Place your bid, Player {currentPlayer}!</span>
@@ -117,20 +139,10 @@ const App = () => {
               previousBids={previousBids}
               isProcessing={isProcessing}
             />
-            {player1Bid && !roundWinner && (
-              <TextColumns player={1} bid={player1Bid} />
-            )}
-            {player2Bid && !roundWinner && (
-              <TextColumns player={2} bid={player2Bid} />
-            )}
-            {roundWinner && (
-              <Text color="black">
-                Item Cost: {currentItem.currency.symbol}
-                {currentItem.price}
-              </Text>
-            )}
+            {player1Bid && <TextColumns player={1} bid={player1Bid} />}
+            {player2Bid && <TextColumns player={2} bid={player2Bid} />}
           </ReBox>
-        </Box>
+        </StyledWrapper>
       </Box>
     </Main>
   )
