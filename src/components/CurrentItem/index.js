@@ -27,7 +27,7 @@ const CurrentItem = ({ item, onBid, previousBids, isProcessing }) => {
   }
 
   if (!item) return null
-  console.log(isProcessing)
+
   return (
     <StyledItem>
       <Box
